@@ -1,0 +1,14 @@
+{
+  "name": "cordova-plugin-face-recognize",
+  "version": "1.0.1",
+  "description": "",
+  "cordova": {
+    "id": "cordova-plugin-face-recognize",
+    "platforms": []
+  },
+  "keywords": [
+    "ecosystem:cordova"
+  ],
+  "author": "",
+  "license": "ISC"
+}

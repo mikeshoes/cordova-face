@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HelloCordova</string>
+    <string name="launcher_name">@string/app_name</string>
+    <string name="activity_name">@string/launcher_name</string>
+    <string name="preview_tip">请将头部置入取景框内</string>
+    <string name="returns">＜返回</string>
+    <string name="complete">完成</string>
+    <string name="collection_complete">采集完成...</string>
+    <string name="start">开始采集</string>
+    <string name="repeat">重新采集</string>
+    <string name="comparing">正在校验身份...</string>
+    <string name="pass">身份验证通过</string>
+    <string name="fail">身份校验失败</string>
+    <string name="compare">身份校验</string>
+</resources>
