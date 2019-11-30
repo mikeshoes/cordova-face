@@ -28,6 +28,9 @@
 		<config-file parent="/manifest/application" target="AndroidManifest.xml"> 
             <activity android:name="cordova.plugin.face.recognize.FacePreviewActivity" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:screenOrientation="portrait"/>
 		</config-file>
+		<edit-config file="AndroidManifest.xml" target="/manifest/application" mode="merge">
+			<application android:networkSecurityConfig="@xml/network_security_config" />
+		</edit-config>	
 		<source-file src="src/android/FaceRecognizePlugin.java" target-dir="cordova/plugin/face/recognize" />
 		<source-file src="src/android/FacePreviewActivity.java" target-dir="cordova/plugin/face/recognize" />
 		<source-file src="src/android/HrFaceSdkHelper.java" target-dir="cordova/plugin/face/recognize" />
