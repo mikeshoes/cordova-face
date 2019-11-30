@@ -38,7 +38,7 @@
 		<source-file src="src/android/CommonUtils.java" target-dir="cordova/plugin/face/recognize" />
 		<resource-file  src="src/android/preview.xml" target="res/layout/preview.xml" />
 		<resource-file src="src/android/strings.xml" target="res/values/strings.xml" />
-		<resource-file src="src/android/network_security_config.xml" target="res/values/network_security_config.xml" />
+		<resource-file src="src/android/network_security_config.xml" target="res/xml/network_security_config.xml" />
 		<source-file src="src/android/libs/facedetection.jar" target-dir="libs/" />
 		<source-file src="src/android/libs/armeabi/libArcSoft_FDEngine.so" target-dir="src/main/jniLibs/armeabi/"/>
 		<source-file src="src/android/libs/armeabi/libmpbase.so" target-dir="src/main/jniLibs/armeabi/"/>
