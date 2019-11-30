@@ -25,9 +25,6 @@
 			 <uses-feature android:name="android.hardware.camera.autofocus" />
 			<uses-permission android:name="android.permission.WEITE_EXTERNAL_STORAGE"/>
 		</config-file>
-		<edit-config  target="/manifest/application" file="AndroidManifest.xml" mode="merge">
-            <application android:networkSecurityConfig="@xml/network_security_config" />
-		</edit-config >
 		<config-file parent="/manifest/application" target="AndroidManifest.xml"> 
             <activity android:name="cordova.plugin.face.recognize.FacePreviewActivity" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:screenOrientation="portrait"/>
 		</config-file>
