@@ -286,6 +286,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     }
 
     private void compareFace(HrFaceSdkHelper.StoreFace storeFace) {
+        Timer timer = new Timer();
         try {
             FileInputStream in = new FileInputStream(getLocalAuthFile());
             byte[] buf = new byte[1024];
@@ -301,6 +302,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             String basePicData = parts[0];
 
             try {
+                Log.e(TAG, basePicData);
                 JSONObject compare = new JSONObject();
                 String newFace = saveFace(storeFace, false);
                 compare.put("type", 1); // 0,1 区分比较的内容 0 传递url 1传递内容这里传递内容
@@ -308,7 +310,6 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                 compare.put("content_2", newFace);
                 OkHttpClient client = new OkHttpClient();
                 MediaType type = MediaType.parse("application/json; charset=utf-8");
-                Timer timer = new Timer();
                 final Request request = new Request.Builder()
                         .url(compareUrl)
                         .post(RequestBody.create(type, compare.toString())).build();
@@ -354,8 +355,26 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                         }
                     }
                 });
-            } catch (JSONException e) {}
-        } catch (IOException e){}
+            } catch (JSONException e) {
+                showText.setText("请求验证失败！请稍后重试");
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        finish();
+                    }
+                }, 1000);
+                Log.e(TAG, e.getMessage());
+            }
+        } catch (IOException e){
+            showText.setText("本地采集失效！请联系管理员");
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    finish();
+                }
+            }, 1000);
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     private String saveFace(HrFaceSdkHelper.StoreFace storeFace, boolean save) {
