@@ -50,7 +50,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     private Camera mCamera;
     private String appId;
     private String checkSDKkey;
-    final String compareUrl = "http://www.dianti12345.com/push/face/compare";
+    final String compareUrl = "http://XXXXXX/push/face/compare";
     private HrFaceSdkHelper checkHelper;
     private String uniqueId;
     private TextView showText;
