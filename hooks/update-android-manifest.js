@@ -29,7 +29,7 @@ var txt = fs.readFileSync(androidManifest, 'utf8');
 var lines = txt.split('\n');
 var searchingFor = '<application';
 var newManifest = [];
-var largeHeap = 'android:networkSecurityConfig="@xml/network_security_config"';
+var largeHeap = 'android:networkSecurityConfig="@xml/network_security_config" android:allowBackup="false" tools:replace="android:allowBackup"';
 lines.forEach(function (line) {
     if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(largeHeap) == -1) {
         newManifest.push(line.replace('<application', '<application ' + largeHeap));

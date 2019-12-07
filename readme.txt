@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { Cordova, IonicNativePlugin, Plugin } from '@ionic-native/core';
 
 export interface FaceOptions {
-
-  uniqueId: string;
  
   isCollect: boolean;
 
+  bizId: string;
+
+  token: string;
 }
 
 /**

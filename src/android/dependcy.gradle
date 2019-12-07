@@ -6,3 +6,17 @@ android {
 	}
 }
 
+
+repositories {
+	flatDir {
+		dirs 'libs'
+	}
+}
+
+dependencies {
+	implementation (name:'rpsdk-3.2.0.4', ext:'aar')
+	implementation (name:'FaceLivenessOpen-2.2.0.7', ext:'aar')
+	implementation (name:'oss-android-sdk-2.9.2', ext:'aar')
+	implementation (name:'SecurityGuardSDK-external-preInstall-5.4.184', ext:'aar')
+	implementation (name:'SecurityBodySDK-external-preInstall-5.4.108', ext:'aar')
+}

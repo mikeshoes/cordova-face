@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.alibaba.security.rp.RPSDK;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
@@ -14,8 +16,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 public class FaceRecognizePlugin extends CordovaPlugin {
     private static final String TAG = FaceRecognizePlugin.class.getSimpleName();
+    private static String QueryUrl = "";
 
     private String appId;
     private String fdSDKkey;
@@ -30,7 +43,9 @@ public class FaceRecognizePlugin extends CordovaPlugin {
     protected void pluginInitialize() {
         appId = preferences.getString("face_app_id", "");
         fdSDKkey = preferences.getString("fd_sdk_key", "");
-        frSDKkey = preferences.getString("fr_sdk_key","");
+        QueryUrl = preferences.getString("query_url","");
+        // 初始化阿里云活体检测SDK
+        RPSDK.initialize(webView.getContext().getApplicationContext());
         super.pluginInitialize();
     }
 
@@ -84,7 +99,6 @@ public class FaceRecognizePlugin extends CordovaPlugin {
         removeBatteryListener();
     }
 
-
     /**
      * Stop the battery receiver and set it to null.
      */
@@ -100,22 +114,72 @@ public class FaceRecognizePlugin extends CordovaPlugin {
     }
 
     private void startPreview(JSONObject message) {
-        Intent intent = new Intent();
-        Context context = webView.getContext();
-        intent.setClass(context, FacePreviewActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("app_id", appId);
-        bundle.putString("fd_sdk_key", fdSDKkey);
-        bundle.putString("fr_sdk_key", frSDKkey);
         try{
-            bundle.putString("unique_id", message.getString("uniqueId"));
-            bundle.putBoolean("isCollect", message.getBoolean("isCollect") );
+            boolean isCollect = message.getBoolean("isCollect");
+            // 采集
+            if (isCollect) {
+                Bundle bundle = new Bundle();
+                bundle.putString("app_id", appId);
+                bundle.putString("fd_sdk_key", fdSDKkey);
+                bundle.putString("fr_sdk_key", frSDKkey);
+                bundle.putString("unique_id", message.getString("uniqueId"));
+                bundle.putBoolean("isCollect", message.getBoolean("isCollect") );
+                Intent intent = new Intent();
+                Context context = webView.getContext();
+                intent.setClass(context, FacePreviewActivity.class);
+                intent.putExtras(bundle);
+                context.startActivity(intent);
+            } else {
+                // 验证 阿里云活体人脸验证
+                String token = message.getString("token");
+                String bizId = message.getString("bizId");
+                Log.e(TAG, token);
+                RPSDK.startVerifyByNative(token, webView.getContext().getApplicationContext(), new RPSDK.RPCompletedListener() {
+                    @Override
+                    public void onAuditResult(RPSDK.AUDIT audit, String s) {
+                        // 远程查询
+                        Log.e(TAG, audit.name());
+                        JSONObject jb = new JSONObject();
+                        try {
+                            jb.put("biz_id", bizId);
+                            OkHttpClient client = new OkHttpClient();
+                            MediaType type = MediaType.parse("application/json; charset=utf-8");
+                            final Request request = new Request.Builder()
+                                    .url(QueryUrl)
+                                    .post(RequestBody.create(type, jb.toString())).build();
+                            client.newCall(request).enqueue(new Callback() {
+                                @Override
+                                public void onFailure(Call call, IOException e) {
+                                    setFail();
+                                }
+                                @Override
+                                public void onResponse(Call call, Response response) throws IOException {
+                                    Log.e(TAG, response.toString());
+                                    if (response.code() == 200) {
+                                        try {
+                                            String rs = new String(response.body().bytes());
+                                            JSONObject jb = new JSONObject(rs);
+                                            boolean success = jb.getBoolean("success");
+                                            if (success) {
+                                                setSuccess();
+                                                return;
+                                            }
+                                        } catch (JSONException e){
+                                            Log.e(TAG, e.getMessage());
+                                        }
+                                    }
+                                    setFail();
+                                }
+                            });
+                        } catch ( JSONException e ){
+                            setFail();
+                        }
+                    }
+                });
+            }
         } catch (JSONException e) {
-            Log.e("previewTag", e.getMessage());
+            setFail();
         }
-
-        intent.putExtras(bundle);
-        context.startActivity(intent);
     }
 
     /**
@@ -142,6 +206,28 @@ public class FaceRecognizePlugin extends CordovaPlugin {
      */
     private void updateMessageInfo(Intent batteryIntent) {
         sendUpdate(this.getMessageInfo(batteryIntent));
+    }
+
+    private void setSuccess() {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("status", true);
+            json.put("image", "");
+            sendUpdate(json);
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    private void setFail() {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("status", false);
+            json.put("image", "");
+            sendUpdate(json);
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     /**

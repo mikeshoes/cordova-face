@@ -24,24 +24,9 @@ import android.widget.TextView;
 
 import com.arcsoft.facedetection.AFD_FSDKFace;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class FacePreviewActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback {
     private static final String TAG = FacePreviewActivity.class.getSimpleName();
@@ -50,12 +35,9 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     private Camera mCamera;
     private String appId;
     private String checkSDKkey;
-    final String compareUrl = "http://www.dianti12345.com/push/face/compare";
     private HrFaceSdkHelper checkHelper;
-    private String uniqueId;
     private TextView showText;
     private Button options;
-    private boolean isCollect = false;
     private boolean startCollect = false;
     private HrFaceSdkHelper.StoreFace storeFace; // 检测到的数据
     private boolean result = false;
@@ -72,8 +54,6 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             Log.e(TAG,"获取sdk授权数据错误：" + e.getMessage());
         }
 
-        uniqueId = getIntent().getStringExtra("unique_id");
-        isCollect = getIntent().getBooleanExtra("isCollect", false);
         createView();
         super.onCreate(savedInstanceState);
     }
@@ -118,10 +98,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             }
         });
 
-        options.setText("身份校验");
-        if (isCollect) {
-            options.setText("开始采集");
-        }
+        options.setText("开始采集");
         // 返回
         Button returnBtn = findViewById(getApplication().getResources().getIdentifier("returnBack", "id", getApplication().getPackageName()));
         returnBtn.setBackgroundColor(Color.TRANSPARENT);
@@ -239,7 +216,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
         releaseCameraAndPreview();
         String pic = "";
         if (storeFace != null) {
-            pic = saveFace(storeFace, isCollect);
+            pic = saveFace(storeFace);
         }
 
         Intent intent = new Intent("android.corodva.face.check.Action");
@@ -281,103 +258,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
         checkHelper.destroy();
     }
 
-    private String getLocalAuthFile() {
-        return getExternalCacheDir() + "/" + "face_"+uniqueId+".im";
-    }
-
-    private void compareFace(HrFaceSdkHelper.StoreFace storeFace) {
-        Timer timer = new Timer();
-        try {
-            FileInputStream in = new FileInputStream(getLocalAuthFile());
-            byte[] buf = new byte[1024];
-            int length = 0;
-            StringBuilder buffer = new StringBuilder();
-            while((length = in.read(buf)) != -1){
-                buffer.append(new String(buf,0,length));
-            }
-            //最后记得，关闭流
-            in.close();
-            String authData =  buffer.toString();
-            String[] parts = authData.split(";", 4);
-            String basePicData = parts[0];
-
-            try {
-                Log.e(TAG, basePicData);
-                JSONObject compare = new JSONObject();
-                String newFace = saveFace(storeFace, false);
-                compare.put("type", 1); // 0,1 区分比较的内容 0 传递url 1传递内容这里传递内容
-                compare.put("content_1", basePicData);
-                compare.put("content_2", newFace);
-                OkHttpClient client = new OkHttpClient();
-                MediaType type = MediaType.parse("application/json; charset=utf-8");
-                final Request request = new Request.Builder()
-                        .url(compareUrl)
-                        .post(RequestBody.create(type, compare.toString())).build();
-                client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        Log.e(TAG, "compare face request fail : " + e.getMessage());
-                        showText.setText("请求验证失败！请稍后重试");
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                finish();
-                            }
-                        }, 1000);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        Log.e(TAG, response.toString());
-                        if (response.code() == 200) {
-                            try {
-                                String rs = new String(response.body().bytes());
-                                JSONObject jb = new JSONObject(rs);
-                                result = jb.getBoolean("success");
-                                showText.setText( result ? "身份验证通过" : "身份验证不通过");
-                                timer.schedule(new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        finish();
-                                    }
-                                }, 1000);
-                            } catch (JSONException e){
-                                Log.e(TAG, e.getMessage());
-                            }
-                        } else {
-                            showText.setText("请求验证失败！请稍后重试");
-                            timer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    finish();
-                                }
-                            }, 1000);
-                        }
-                    }
-                });
-            } catch (JSONException e) {
-                showText.setText("请求验证失败！请稍后重试");
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        finish();
-                    }
-                }, 1000);
-                Log.e(TAG, e.getMessage());
-            }
-        } catch (IOException e){
-            showText.setText("本地采集失效！请联系管理员");
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    finish();
-                }
-            }, 1000);
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    private String saveFace(HrFaceSdkHelper.StoreFace storeFace, boolean save) {
+    private String saveFace(HrFaceSdkHelper.StoreFace storeFace) {
         // byte to bitmap
         byte[] bytes = storeFace.getBytes();
         int width = storeFace.getWidth();
@@ -386,25 +267,11 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
 
         Bitmap maps = CommonUtils.nv21ToBitmap(getApplicationContext(), bytes, width, height);
 
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            //该方法用来压缩图片，第一个参数为图片格式，第二个参数为截取图片的保留率，如当前为90，则保留之前图片90%的区域
-            maps.compress(Bitmap.CompressFormat.JPEG,100,outputStream );
-            //得到图片的String
-            String pic = Base64.encodeToString( outputStream.toByteArray(), Base64.NO_WRAP);
-            // 本地存储采集数据
-            if (save) {
-                String storeString = pic + ";" + width + ":" + height + ";" + rect.top + ":" + rect.right + ":" + rect.left + ":" + rect.bottom + ";" + storeFace.getAFR_FOC();
-
-                FileOutputStream fos = new FileOutputStream(getLocalAuthFile());
-                fos.write(storeString.getBytes());
-                fos.close();
-            }
-            return pic;
-        } catch (IOException e) {
-            Log.e(TAG, "bitmap2base64 error: " + e.getMessage());
-        }
-        return "";
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        //该方法用来压缩图片，第一个参数为图片格式，第二个参数为截取图片的保留率，如当前为90，则保留之前图片90%的区域
+        maps.compress(Bitmap.CompressFormat.JPEG,100,outputStream );
+        //得到图片的String
+        return Base64.encodeToString( outputStream.toByteArray(), Base64.NO_WRAP);
     }
 
     @Override
@@ -421,15 +288,10 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                 storeFace.setRect(results.get(0).getRect());
                 storeFace.setAFR_FOC(results.get(0).getDegree());
 
-                if (isCollect) {
-                    showText.setText("采集完成...");
-                    options.setVisibility(View.INVISIBLE);
-                    result = true;
-                    finish();
-                } else {
-                    showText.setText("正在验证请稍等……");
-                    compareFace(storeFace);
-                }
+                showText.setText("采集完成...");
+                options.setVisibility(View.INVISIBLE);
+                result = true;
+                finish();
                 Log.d(TAG, "检测到人脸");
             }
         }
