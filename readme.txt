@@ -5,11 +5,11 @@ export interface FaceOptions {
  
   isCollect: boolean;
 
-  bizId: string;
+  bizId?: string;
 
-  token: string;
+  token?: string;
 
-  queryUrl: string;
+  queryUrl?: string;
 }
 
 /**
