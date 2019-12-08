@@ -8,6 +8,8 @@ export interface FaceOptions {
   bizId: string;
 
   token: string;
+
+  queryUrl: string;
 }
 
 /**
