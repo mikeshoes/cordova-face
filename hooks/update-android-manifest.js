@@ -30,16 +30,24 @@ var lines = txt.split('\n');
 var searchingFor = '<application';
 var searchManifest = '<manifest';
 var newManifest = [];
-var largeHeap = 'android:networkSecurityConfig="@xml/network_security_config" android:allowBackup="false" tools:replace="android:allowBackup"';
+var largeHeap = 'android:networkSecurityConfig="@xml/network_security_config"';
+var allowBack = ' android:allowBackup="false" tools:replace="android:allowBackup"';
 var toolXml = 'xmlns:tools="http://schemas.android.com/tools"'
 lines.forEach(function (line) {
-    if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(largeHeap) == -1) {
-        newManifest.push(line.replace('<application', '<application ' + largeHeap));
-    } else if(line.trim().indexOf(searchManifest) != -1 && line.trim().indexOf(toolXml) == -1) {
-        newManifest.push(line.replace('<manifest', '<manifest ' + toolXml));
-    } else {
-        newManifest.push(line);
+
+    if(line.trim().indexOf(searchManifest) != -1 && line.trim().indexOf(toolXml) == -1) {
+        line = line.replace('<manifest', '<manifest ' + toolXml);
     }
+
+    if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(largeHeap) == -1) {
+        line = line.replace('<application', '<application ' + largeHeap);
+    } 
+
+    if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(allowBack) == -1) {
+        line = line.replace('<application', '<application ' + allowBack);
+    }
+
+    newManifest.push(line);
 });
 
 fs.writeFileSync(androidManifest, newManifest.join('\n'));
