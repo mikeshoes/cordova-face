@@ -41,6 +41,5 @@
     ```
             <preference name="face_app_id" value="" /> // 虹软的appId
             <preference name="fd_sdk_key" value="" /> // 虹软的人脸检测SDKKey
-            <preference name="fr_sdk_key" value="" /> // 虹软的人脸识别SDKkey
 
     ```           
