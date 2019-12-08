@@ -28,11 +28,9 @@ import okhttp3.Response;
 
 public class FaceRecognizePlugin extends CordovaPlugin {
     private static final String TAG = FaceRecognizePlugin.class.getSimpleName();
-    private static String QueryUrl = "";
 
     private String appId;
     private String fdSDKkey;
-    private String frSDKkey;
 
     private BroadcastReceiver receiver;
     private CallbackContext backendCallbackContext;
@@ -43,7 +41,6 @@ public class FaceRecognizePlugin extends CordovaPlugin {
     protected void pluginInitialize() {
         appId = preferences.getString("face_app_id", "");
         fdSDKkey = preferences.getString("fd_sdk_key", "");
-        QueryUrl = preferences.getString("query_url","");
         // 初始化阿里云活体检测SDK
         RPSDK.initialize(webView.getContext().getApplicationContext());
         super.pluginInitialize();
@@ -121,8 +118,6 @@ public class FaceRecognizePlugin extends CordovaPlugin {
                 Bundle bundle = new Bundle();
                 bundle.putString("app_id", appId);
                 bundle.putString("fd_sdk_key", fdSDKkey);
-                bundle.putString("fr_sdk_key", frSDKkey);
-                bundle.putString("unique_id", message.getString("uniqueId"));
                 bundle.putBoolean("isCollect", message.getBoolean("isCollect") );
                 Intent intent = new Intent();
                 Context context = webView.getContext();
@@ -133,7 +128,8 @@ public class FaceRecognizePlugin extends CordovaPlugin {
                 // 验证 阿里云活体人脸验证
                 String token = message.getString("token");
                 String bizId = message.getString("bizId");
-                Log.e(TAG, token);
+                String queryUrl = message.getString("queryUrl");
+                Log.i(TAG, token);
                 RPSDK.startVerifyByNative(token, webView.getContext().getApplicationContext(), new RPSDK.RPCompletedListener() {
                     @Override
                     public void onAuditResult(RPSDK.AUDIT audit, String s) {
@@ -145,7 +141,7 @@ public class FaceRecognizePlugin extends CordovaPlugin {
                             OkHttpClient client = new OkHttpClient();
                             MediaType type = MediaType.parse("application/json; charset=utf-8");
                             final Request request = new Request.Builder()
-                                    .url(QueryUrl)
+                                    .url(queryUrl)
                                     .post(RequestBody.create(type, jb.toString())).build();
                             client.newCall(request).enqueue(new Callback() {
                                 @Override
