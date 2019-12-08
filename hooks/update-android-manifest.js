@@ -31,7 +31,8 @@ var searchingFor = '<application';
 var searchManifest = '<manifest';
 var newManifest = [];
 var largeHeap = 'android:networkSecurityConfig="@xml/network_security_config"';
-var allowBack = ' android:allowBackup="false" tools:replace="android:allowBackup"';
+var allowBack = 'android:allowBackup="false"';
+var toolallow = 'tools:replace="android:allowBackup"';
 var toolXml = 'xmlns:tools="http://schemas.android.com/tools"'
 lines.forEach(function (line) {
 
@@ -45,6 +46,10 @@ lines.forEach(function (line) {
 
     if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(allowBack) == -1) {
         line = line.replace('<application', '<application ' + allowBack);
+    }
+
+    if (line.trim().indexOf(searchingFor) != -1 && line.trim().indexOf(toolallow) == -1) {
+        line = line.replace('<application', '<application ' + toolallow);
     }
 
     newManifest.push(line);
