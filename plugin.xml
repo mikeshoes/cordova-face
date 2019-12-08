@@ -49,9 +49,9 @@
 		<source-file src="src/android/libs/armeabi/libc++_shared.so" target-dir="src/main/jniLibs/armeabi/"/>
 		<source-file src="src/android/libs/armeabi/libFaceLivenessOpen-release_alijtca_plus.so" target-dir="src/main/jniLibs/armeabi/"/>
 		<source-file src="src/android/libs/armeabi/libLivenessModule.so" target-dir="src/main/jniLibs/armeabi/"/>
-		<source-file src="src/android/libs/armeabi-v7a/libArcSoft_FDEngine.so" target-dir="src/main/jniLibs/armeabi-v7a/"/>
-		<source-file src="src/android/libs/armeabi-v7a/libmpbase.so"target-dir="src/main/jniLibs/armeabi-v7a/"/>
-		<source-file src="src/android/libs/armeabi-v7a/libc++_shared.so" target-dir="src/main/jniLibs/armeabi-v7a/"/>
+		<source-file src="src/android/libs/armeabi-v7a/libArcSoft_FDEngine.so" target-dir="src/main/jniLibs/armeabi-v7a/" />
+		<source-file src="src/android/libs/armeabi-v7a/libmpbase.so" target-dir="src/main/jniLibs/armeabi-v7a/" />
+		<source-file src="src/android/libs/armeabi-v7a/libc++_shared.so" target-dir="src/main/jniLibs/armeabi-v7a/" />
 		<framework src="src/android/dependcy.gradle" custom="true" type="gradleReference"/>
 		<framework src="com.android.support:appcompat-v7:24.0.0"/>
 	</platform>
