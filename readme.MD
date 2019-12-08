@@ -23,7 +23,9 @@
     declare var window: any;
 
     cordova.plugins.cordovaFace.start({
-        uniqueId: '', // 当前用户的唯一标识区分本地存储的校验数据
+        token: '', // 验证时传入
+        bizId: '', // 验证时传入
+        queryUrl: '', // 验证时传入
         isCollect: true // 当数据为采集数据时，传递
     }, function(data){
         // 初始化成功会返回 [status: true|false, image: 'base64编码数据'] true 标识本次采集或者身份识别通过。 false标识识别或身份识别失败。失败可重新调用方法再次识别
