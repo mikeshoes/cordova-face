@@ -50,7 +50,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     private Camera mCamera;
     private String appId;
     private String checkSDKkey;
-    final String compareUrl = "http://www.dianti12345.com/push/face/compare";
+    private String compareUrl = "";
     private HrFaceSdkHelper checkHelper;
     private String uniqueId;
     private TextView showText;
@@ -68,6 +68,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             Intent intent = getIntent();
             appId = intent.getStringExtra("app_id");
             checkSDKkey = intent.getStringExtra("fd_sdk_key");
+            compareUrl = intent.getStringExtra("query_url");
         } catch (NullPointerException e){
             Log.e(TAG,"获取sdk授权数据错误：" + e.getMessage());
         }
@@ -287,35 +288,48 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
 
     private void compareFace(HrFaceSdkHelper.StoreFace storeFace) {
         try {
-            FileInputStream in = new FileInputStream(getLocalAuthFile());
-            byte[] buf = new byte[1024];
-            int length = 0;
-            StringBuilder buffer = new StringBuilder();
-            while((length = in.read(buf)) != -1){
-                buffer.append(new String(buf,0,length));
-            }
-            //最后记得，关闭流
-            in.close();
-            String authData =  buffer.toString();
-            String[] parts = authData.split(";", 4);
-            String basePicData = parts[0];
+            JSONObject compare = new JSONObject();
+            String newFace = saveFace(storeFace, false);
+            compare.put("uniqueId", uniqueId);
+            compare.put("content_2", newFace);
+            OkHttpClient client = new OkHttpClient();
+            MediaType type = MediaType.parse("application/json; charset=utf-8");
+            Timer timer = new Timer();
+            final Request request = new Request.Builder()
+                    .url(compareUrl)
+                    .post(RequestBody.create(type, compare.toString())).build();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.e(TAG, "compare face request fail : " + e.getMessage());
+                    showText.setText("请求验证失败！请稍后重试");
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            finish();
+                        }
+                    }, 1000);
+                }
 
-            try {
-                JSONObject compare = new JSONObject();
-                String newFace = saveFace(storeFace, false);
-                compare.put("type", 1); // 0,1 区分比较的内容 0 传递url 1传递内容这里传递内容
-                compare.put("content_1", basePicData);
-                compare.put("content_2", newFace);
-                OkHttpClient client = new OkHttpClient();
-                MediaType type = MediaType.parse("application/json; charset=utf-8");
-                Timer timer = new Timer();
-                final Request request = new Request.Builder()
-                        .url(compareUrl)
-                        .post(RequestBody.create(type, compare.toString())).build();
-                client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        Log.e(TAG, "compare face request fail : " + e.getMessage());
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    Log.e(TAG, response.toString());
+                    if (response.code() == 200) {
+                        try {
+                            String rs = new String(response.body().bytes());
+                            JSONObject jb = new JSONObject(rs);
+                            result = jb.getBoolean("success");
+                            showText.setText( result ? "身份验证通过" : "身份验证不通过");
+                            timer.schedule(new TimerTask() {
+                                @Override
+                                public void run() {
+                                    finish();
+                                }
+                            }, 1000);
+                        } catch (JSONException e){
+                            Log.e(TAG, e.getMessage());
+                        }
+                    } else {
                         showText.setText("请求验证失败！请稍后重试");
                         timer.schedule(new TimerTask() {
                             @Override
@@ -324,38 +338,9 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                             }
                         }, 1000);
                     }
-
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        Log.e(TAG, response.toString());
-                        if (response.code() == 200) {
-                            try {
-                                String rs = new String(response.body().bytes());
-                                JSONObject jb = new JSONObject(rs);
-                                result = jb.getBoolean("success");
-                                showText.setText( result ? "身份验证通过" : "身份验证不通过");
-                                timer.schedule(new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        finish();
-                                    }
-                                }, 1000);
-                            } catch (JSONException e){
-                                Log.e(TAG, e.getMessage());
-                            }
-                        } else {
-                            showText.setText("请求验证失败！请稍后重试");
-                            timer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    finish();
-                                }
-                            }, 1000);
-                        }
-                    }
-                });
-            } catch (JSONException e) {}
-        } catch (IOException e){}
+                }
+            });
+        } catch (JSONException e) {}
     }
 
     private String saveFace(HrFaceSdkHelper.StoreFace storeFace, boolean save) {

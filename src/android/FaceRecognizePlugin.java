@@ -109,7 +109,8 @@ public class FaceRecognizePlugin extends CordovaPlugin {
         bundle.putString("fr_sdk_key", frSDKkey);
         try{
             bundle.putString("unique_id", message.getString("uniqueId"));
-            bundle.putBoolean("isCollect", message.getBoolean("isCollect") );
+            bundle.putBoolean("isCollect", message.getBoolean("isCollect"));
+            bundle.putString("query_url", message.getString("query_url"));
         } catch (JSONException e) {
             Log.e("previewTag", e.getMessage());
         }
