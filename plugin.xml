@@ -9,6 +9,7 @@
     </js-module>
 
     <platform name="android">
+		<hook type="after_prepare" src="hooks/update-android-manifest.js" />
 		<config-file parent="/*" target="res/xml/config.xml">
 			<feature name="FaceRecognizePlugin">
 				<param name="android-package" value="cordova.plugin.face.recognize.FaceRecognizePlugin" />
