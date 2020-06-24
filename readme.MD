@@ -12,7 +12,7 @@
 2. 使用说明
     
  1. 安装插件
-    `ionic cordova plugin add https://github.com/mikeshoes/cordova-face.git@version`
+    `ionic cordova plugin add https://github.com/mikeshoes/cordova-face.git#{branch} --variable face_app_id=xxxx --variable fd_sdk_key=xxx `
  2. 使用插件   
     插件基于 虹软的人脸识别android sdk 需要配置plugin.xml中配置sdk的授权
     ionic 使用外部cordova插件有两种方式 *ionic-native* *直接使用*
@@ -23,8 +23,8 @@
     declare var window: any;
 
     cordova.plugins.cordovaFace.start({
-        uniqueId: '', // 当前用户的唯一标识区分本地存储的校验数据
-        queryUrl: '', // 比较接口地址
+        bizId: '', // 校验时传递
+        queryUrl: '', // 校验时传递 比较接口地址 bizId 也可以封在queryUrl中自己取用于登录
         isCollect: true // 当数据为采集数据时，传递
     }, function(data){
         // 初始化成功会返回 [status: true|false, image: 'base64编码数据'] true 标识本次采集或者身份识别通过。 false标识识别或身份识别失败。失败可重新调用方法再次识别
@@ -40,6 +40,5 @@
     ```
             <preference name="face_app_id" value="" /> // 虹软的appId
             <preference name="fd_sdk_key" value="" /> // 虹软的人脸检测SDKKey
-            <preference name="fr_sdk_key" value="" /> // 虹软的人脸识别SDKkey
 
     ```           
