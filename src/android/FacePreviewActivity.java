@@ -240,7 +240,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
         releaseCameraAndPreview();
         String pic = "";
         if (storeFace != null) {
-            pic = saveFace(storeFace, isCollect);
+            pic = saveFace(storeFace, false);
         }
 
         Intent intent = new Intent("android.corodva.face.check.Action");
@@ -291,7 +291,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             JSONObject compare = new JSONObject();
             String newFace = saveFace(storeFace, false);
             compare.put("uniqueId", uniqueId);
-            compare.put("content_2", newFace);
+            compare.put("content_2", "data:image/jpeg;base64," + newFace);
             OkHttpClient client = new OkHttpClient();
             MediaType type = MediaType.parse("application/json; charset=utf-8");
             Timer timer = new Timer();
@@ -313,34 +313,29 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    Log.e(TAG, response.toString());
                     if (response.code() == 200) {
                         try {
                             String rs = new String(response.body().bytes());
                             JSONObject jb = new JSONObject(rs);
                             result = jb.getBoolean("success");
-                            showText.setText( result ? "身份验证通过" : "身份验证不通过");
-                            timer.schedule(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    finish();
-                                }
-                            }, 1000);
                         } catch (JSONException e){
                             Log.e(TAG, e.getMessage());
                         }
+                        showText.setText( result ? "身份验证通过" : "身份验证不通过");
                     } else {
                         showText.setText("请求验证失败！请稍后重试");
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                finish();
-                            }
-                        }, 1000);
                     }
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            finish();
+                        }
+                    }, 1000);
                 }
             });
-        } catch (JSONException e) {}
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     private String saveFace(HrFaceSdkHelper.StoreFace storeFace, boolean save) {
