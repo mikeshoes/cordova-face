@@ -3,7 +3,9 @@ import { Cordova, IonicNativePlugin, Plugin } from '@ionic-native/core';
 
 export interface FaceOptions {
 
-  uniqueId: string;
+  bizId?: string;
+  
+  queryUrl?: string;
  
   isCollect: boolean;
 
