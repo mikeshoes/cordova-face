@@ -22,14 +22,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.arcsoft.facedetection.AFD_FSDKFace;
+import com.arcsoft.face.FaceInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -240,7 +238,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
         releaseCameraAndPreview();
         String pic = "";
         if (storeFace != null) {
-            pic = saveFace(storeFace, false);
+            pic = saveFace(storeFace);
         }
 
         Intent intent = new Intent("android.corodva.face.check.Action");
@@ -266,7 +264,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         requestPermission();
         try {
-            checkHelper = new HrFaceSdkHelper(appId, checkSDKkey);
+            checkHelper = new HrFaceSdkHelper(appId, checkSDKkey, getApplicationContext());
         } catch (Exception e){
             Log.e(TAG, "init checkHelper error: " + e.getMessage());
         }
@@ -289,7 +287,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     private void compareFace(HrFaceSdkHelper.StoreFace storeFace) {
         try {
             JSONObject compare = new JSONObject();
-            String newFace = saveFace(storeFace, false);
+            String newFace = saveFace(storeFace);
             compare.put("uniqueId", uniqueId);
             compare.put("content_2", "data:image/jpeg;base64," + newFace);
             OkHttpClient client = new OkHttpClient();
@@ -338,12 +336,11 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
         }
     }
 
-    private String saveFace(HrFaceSdkHelper.StoreFace storeFace, boolean save) {
+    private String saveFace(HrFaceSdkHelper.StoreFace storeFace) {
         // byte to bitmap
         byte[] bytes = storeFace.getBytes();
         int width = storeFace.getWidth();
         int height = storeFace.getHeight();
-        Rect rect = storeFace.getRect();
 
         Bitmap maps = CommonUtils.nv21ToBitmap(getApplicationContext(), bytes, width, height);
 
@@ -352,17 +349,9 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
             //该方法用来压缩图片，第一个参数为图片格式，第二个参数为截取图片的保留率，如当前为90，则保留之前图片90%的区域
             maps.compress(Bitmap.CompressFormat.JPEG,100,outputStream );
             //得到图片的String
-            String pic = Base64.encodeToString( outputStream.toByteArray(), Base64.NO_WRAP);
+            return Base64.encodeToString( outputStream.toByteArray(), Base64.NO_WRAP);
             // 本地存储采集数据
-            if (save) {
-                String storeString = pic + ";" + width + ":" + height + ";" + rect.top + ":" + rect.right + ":" + rect.left + ":" + rect.bottom + ";" + storeFace.getAFR_FOC();
-
-                FileOutputStream fos = new FileOutputStream(getLocalAuthFile());
-                fos.write(storeString.getBytes());
-                fos.close();
-            }
-            return pic;
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "bitmap2base64 error: " + e.getMessage());
         }
         return "";
@@ -371,7 +360,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     @Override
     public void onPreviewFrame(byte[] bytes, Camera camera) {
         if (startCollect) {
-            List<AFD_FSDKFace> results = checkHelper.checkFace(bytes, previewWidth, previewHeight);
+            List<FaceInfo> results = checkHelper.checkFace(bytes, previewWidth, previewHeight);
             if (results.size() > 0) {
                 startCollect = false;
                 releaseCameraAndPreview();
@@ -380,7 +369,6 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                 storeFace.setWidth(previewWidth);
                 storeFace.setHeight(previewHeight);
                 storeFace.setRect(results.get(0).getRect());
-                storeFace.setAFR_FOC(results.get(0).getDegree());
 
                 if (isCollect) {
                     showText.setText("采集完成...");

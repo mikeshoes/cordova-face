@@ -1,11 +1,14 @@
 package cordova.plugin.face.recognize;
 
+import android.content.Context;
 import android.graphics.Rect;
 import android.util.Log;
 
-import com.arcsoft.facedetection.AFD_FSDKEngine;
-import com.arcsoft.facedetection.AFD_FSDKError;
-import com.arcsoft.facedetection.AFD_FSDKFace;
+import com.arcsoft.face.ErrorInfo;
+import com.arcsoft.face.FaceEngine;
+import com.arcsoft.face.FaceInfo;
+import com.arcsoft.face.enums.DetectFaceOrientPriority;
+import com.arcsoft.face.enums.DetectMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,37 +16,55 @@ import java.util.List;
 class HrFaceSdkHelper {
     private String appId;
     private String checkSDKKey;
-    private AFD_FSDKEngine fdEngine;
+    private FaceEngine faceEngine;
+    private static final String TAG = HrFaceSdkHelper.class.getSimpleName();
 
-    HrFaceSdkHelper( String appId, String checkSDKKey) {
+    HrFaceSdkHelper( String appId, String checkSDKKey, Context context) {
         this.appId = appId;
         this.checkSDKKey = checkSDKKey;
-        init();
+        init(context);
     }
 
-    private void init() {
-        fdEngine = new AFD_FSDKEngine();
+    private void init(Context context) {
         //初始化人脸检测引擎，使用时请替换申请的 APPID 和 SDKKEY
-        AFD_FSDKError err = fdEngine.AFD_FSDK_InitialFaceEngine(appId,checkSDKKey,
-                AFD_FSDKEngine.AFD_OPF_0_HIGHER_EXT, 16, 25);
-        Log.d("com.arcsoft", "AFD_FSDK_InitialFaceEngine = " + err.getCode());
+        int code = FaceEngine.activeOnline(context, appId, checkSDKKey);
+        if(code == ErrorInfo.MOK){
+            Log.i(TAG, "activeOnline success");
+        }else if(code == ErrorInfo.MERR_ASF_ALREADY_ACTIVATED){
+            Log.i(TAG, "already activated");
+        }else{
+            Log.i(TAG, "activeOnline failed, code is : " + code);
+        }
+
+        int scale = 16; // video 16 image 32
+        int maxFaceNum = 1;
+        // 如下的组合，初始化的功能包含：人脸检测、人脸识别、RGB活体检测、年龄、性别、人脸3D角度
+        int initMask = FaceEngine.ASF_FACE_DETECT;
+
+        faceEngine = new FaceEngine();
+        code = faceEngine.init(context, DetectMode.ASF_DETECT_MODE_VIDEO, DetectFaceOrientPriority.ASF_OP_0_ONLY, scale, maxFaceNum, initMask);
+        if (code != ErrorInfo.MOK) {
+            Log.e(TAG, "init failed, code is : " + code);
+        } else {
+            Log.i(TAG, "init success");
+        }
     }
 
     void destroy() {
         //销毁人脸检测引擎
-        AFD_FSDKError err = fdEngine.AFD_FSDK_UninitialFaceEngine();
-        Log.d("com.arcsoft", "AFD_FSDK_UninitialFaceEngine =" + err.getCode());
+        int code = faceEngine.unInit();
+        Log.d("com.arcsoft", "AFD_FSDK_UninitialFaceEngine =" + code);
     }
 
-    List<AFD_FSDKFace> checkFace(byte[] data, int width, int height) {
+    List<FaceInfo> checkFace(byte[] data, int width, int height) {
         // 用来存放检测到的人脸信息列表
-        List<AFD_FSDKFace> result = new ArrayList<>();
+        List<FaceInfo> result = new ArrayList<>();
         //输入的 data 数据为 NV21 格式（如 Camera 里 NV21 格式的 preview 数据），其中 height 不能为奇数，人脸检测返回结果保存在 result。
-        AFD_FSDKError err = fdEngine.AFD_FSDK_StillImageFaceDetection(data, width, height, AFD_FSDKEngine.CP_PAF_NV21, result);
-        Log.e("ddd", String.valueOf(err.getCode()));
-        Log.d("com.arcsoft", "AFD_FSDK_StillImageFaceDetection =" + err.getCode());
-        Log.d("com.arcsoft", "Face=" + result.size()); for (AFD_FSDKFace face : result) {
-            Log.d("com.arcsoft", "Face:" + face.toString());
+        int code = faceEngine.detectFaces(data, width, height, FaceEngine.CP_PAF_NV21, result);
+        if (code == ErrorInfo.MOK && result.size() > 0) {
+            Log.i(TAG, "detectFaces, face num is : "+ result.size() );
+        } else {
+            Log.i(TAG, "no face detected, code is : " + code);
         }
 
         return result;

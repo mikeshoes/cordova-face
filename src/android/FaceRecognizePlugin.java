@@ -30,7 +30,6 @@ public class FaceRecognizePlugin extends CordovaPlugin {
     protected void pluginInitialize() {
         appId = preferences.getString("face_app_id", "");
         fdSDKkey = preferences.getString("fd_sdk_key", "");
-        frSDKkey = preferences.getString("fr_sdk_key","");
         super.pluginInitialize();
     }
 
@@ -106,7 +105,6 @@ public class FaceRecognizePlugin extends CordovaPlugin {
         Bundle bundle = new Bundle();
         bundle.putString("app_id", appId);
         bundle.putString("fd_sdk_key", fdSDKkey);
-        bundle.putString("fr_sdk_key", frSDKkey);
         
          try{
             boolean isCollect = message.getBoolean("isCollect");
