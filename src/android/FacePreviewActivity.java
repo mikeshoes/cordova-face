@@ -21,7 +21,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.arcsoft.face.ErrorInfo;
 import com.arcsoft.face.FaceInfo;
 
 import org.json.JSONException;
@@ -29,6 +31,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -84,6 +87,11 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
                 return;
             }
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, 2);
+                return;
+            }
         }
         start();
     }
@@ -91,14 +99,33 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull  String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1) {
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    start();
+        Boolean granted = true;
+        switch (requestCode) {
+            case 1:
+                if ( grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    requestPermission();
+                    return;
                 } else {
-                   // todo
+                    granted = false;
+                    Toast.makeText(getApplicationContext(), "请到应用授权打开照相机权限", Toast.LENGTH_SHORT).show();
                 }
-            }
+                break;
+            case 2:
+                if ( grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    requestPermission();
+                    return;
+                } else {
+                    granted = false;
+                    Toast.makeText(getApplicationContext(), "请到应用授权打开获取手机信息权限", Toast.LENGTH_SHORT).show();
+                }
+        }
+        if (!granted) {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    finish();
+                }
+            }, 1000);
         }
     }
 
@@ -263,11 +290,8 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         requestPermission();
-        try {
-            checkHelper = new HrFaceSdkHelper(appId, checkSDKkey, getApplicationContext());
-        } catch (Exception e){
-            Log.e(TAG, "init checkHelper error: " + e.getMessage());
-        }
+        checkHelper = new HrFaceSdkHelper(appId, checkSDKkey);
+        int code = checkHelper.init(getApplicationContext());
     }
 
     @Override
@@ -360,6 +384,7 @@ public class FacePreviewActivity extends Activity implements SurfaceHolder.Callb
     @Override
     public void onPreviewFrame(byte[] bytes, Camera camera) {
         if (startCollect) {
+            showText.setText("正在检测人脸信息...");
             List<FaceInfo> results = checkHelper.checkFace(bytes, previewWidth, previewHeight);
             if (results.size() > 0) {
                 startCollect = false;
