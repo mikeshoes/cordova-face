@@ -37,13 +37,13 @@ class HrFaceSdkHelper {
             return code;
         }
 
-        int scale = 32; // video 16 image 32
+        int scale = 16; // video 16 image 32
         int maxFaceNum = 1;
         // 如下的组合，初始化的功能包含：人脸检测、人脸识别、RGB活体检测、年龄、性别、人脸3D角度
         int initMask = FaceEngine.ASF_FACE_DETECT;
 
         faceEngine = new FaceEngine();
-        code = faceEngine.init(context, DetectMode.ASF_DETECT_MODE_IMAGE, DetectFaceOrientPriority.ASF_OP_0_ONLY, scale, maxFaceNum, initMask);
+        code = faceEngine.init(context, DetectMode.ASF_DETECT_MODE_VIDEO, DetectFaceOrientPriority.ASF_OP_0_ONLY, scale, maxFaceNum, initMask);
         if (code != ErrorInfo.MOK) {
             Log.e(TAG, "init failed, code is : " + code);
         } else {
